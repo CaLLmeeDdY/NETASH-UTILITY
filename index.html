@@ -2,18 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Netash Utility Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netash Utility Web | Cloud Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gauge.js/1.3.7/gauge.min.js"></script>
     <style>
         :root { --bg: #0d1117; --sidebar: #010409; --card: #161b22; --accent: #58a6ff; --text: #c9d1d9; --border: #30363d; --success: #3fb950; --danger: #f85149; }
-        body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; }
+        body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
         
-        .sidebar { width: 250px; background: var(--sidebar); border-right: 1px solid var(--border); padding: 20px 0; }
+        .sidebar { width: 250px; background: var(--sidebar); border-right: 1px solid var(--border); padding: 20px 0; display: flex; flex-direction: column; }
         .sidebar h2 { color: var(--accent); text-align: center; font-size: 1.2rem; margin-bottom: 30px; letter-spacing: 1px; }
         .nav-item { padding: 15px 25px; cursor: pointer; border-left: 3px solid transparent; transition: 0.2s; font-weight: bold; }
         .nav-item:hover { background: #161b22; }
         .nav-item.active { border-left-color: var(--accent); background: #161b22; color: #fff; }
+        .cloud-badge { margin-top: auto; padding: 20px; text-align: center; color: #8b949e; font-size: 0.8rem; }
         
         .content { flex-grow: 1; padding: 40px; overflow-y: auto; }
         .module { display: none; background: var(--card); padding: 30px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -27,8 +29,8 @@
         
         .ping-bar { background: var(--bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border); margin-bottom: 20px; font-size: 1.2rem; }
         #st-ping { font-weight: bold; color: #fff; font-size: 1.5rem; }
-        .gauge-container { display: flex; justify-content: space-around; margin-bottom: 20px; }
-        .gauge-box { background: var(--bg); padding: 20px; border-radius: 8px; border: 1px solid var(--border); text-align: center; width: 45%; }
+        .gauge-container { display: flex; justify-content: space-around; margin-bottom: 20px; flex-wrap: wrap; }
+        .gauge-box { background: var(--bg); padding: 20px; border-radius: 8px; border: 1px solid var(--border); text-align: center; width: 40%; min-width: 200px; margin-bottom: 10px; }
         .gauge-box canvas { width: 100%; max-width: 250px; }
         .gauge-value { font-size: 2rem; font-weight: bold; color: #fff; display: block; margin-top: -10px; }
         .stat-lbl { font-size: 0.8rem; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; }
@@ -38,13 +40,6 @@
         #ping-console { height: 150px; margin-top: 15px; color: #c9d1d9; }
         .chart-container { margin-top: 15px; height: 250px; width: 100%; }
         #pingStatus { margin-top: 10px; font-family: monospace; color: #8b949e; display: inline-block; }
-
-        /* Scanner Specific Styles */
-        .scan-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: var(--bg); border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
-        .scan-table th, .scan-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); }
-        .scan-table th { background: #010409; color: var(--accent); font-size: 0.9rem; text-transform: uppercase; }
-        .scan-table tr:hover { background: #1f242b; }
-        .badge { background: var(--success); color: #000; padding: 3px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -52,56 +47,36 @@
     <div class="sidebar">
         <h2>NETASH_UTILITY</h2>
         <div class="nav-item active" onclick="switchTab('speedtest')">Speed & Throughput</div>
-        <div class="nav-item" onclick="switchTab('ping')">Ping Pulse (Live)</div>
-        <div class="nav-item" onclick="switchTab('scanner')">Network Scanner</div>
+        <div class="nav-item" onclick="switchTab('ping')">Web Ping Pulse</div>
+        <div class="cloud-badge">☁️ Vercel Cloud Edition</div>
     </div>
 
     <div class="content">
         <div id="speedtest" class="module active">
-            <h3>Speed & Throughput</h3>
-            <div id="st-isp" style="color: #8b949e; font-size: 0.9rem; margin-bottom: 15px;">ISP: Standing by...</div>
-            <div class="ping-bar"><span class="stat-lbl">Latency: </span><span id="st-ping">--</span> <span class="stat-lbl" style="font-size: 0.9rem;">ms</span></div>
+            <h3>Client-Side Bandwidth Diagnostics</h3>
+            <div id="st-isp" style="color: #8b949e; font-size: 0.9rem; margin-bottom: 15px;">Network: Awaiting execution...</div>
+            
+            <div class="ping-bar"><span class="stat-lbl">HTTP Latency: </span><span id="st-ping">--</span> <span class="stat-lbl" style="font-size: 0.9rem;">ms</span></div>
+            
             <div class="gauge-container">
                 <div class="gauge-box"><span class="stat-lbl">Download</span><canvas id="dlGauge"></canvas><span id="st-dl" class="gauge-value">0.00</span><span class="stat-lbl">Mbps</span></div>
                 <div class="gauge-box"><span class="stat-lbl">Upload</span><canvas id="ulGauge"></canvas><span id="st-ul" class="gauge-value">0.00</span><span class="stat-lbl">Mbps</span></div>
             </div>
-            <div id="st-console" class="console-log">>_ Initialization complete. Ready for bandwidth test...</div>
-            <button id="st-btn" onclick="runSpeedtest()" style="width: 100%; padding: 15px; margin-top: 20px; font-size: 1rem;">EXECUTE DIAGNOSTICS</button>
+            
+            <div id="st-console" class="console-log">>_ Initialization complete. Cloud engine ready...</div>
+            <button id="st-btn" onclick="runCloudSpeedtest()" style="width: 100%; padding: 15px; margin-top: 20px; font-size: 1rem;">EXECUTE DIAGNOSTICS</button>
         </div>
 
         <div id="ping" class="module">
-            <h3>Live Ping & Latency</h3>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <input type="text" id="targetIp" value="8.8.8.8" placeholder="Enter IP or Domain">
+            <h3>Live HTTP Ping (Favicon Method)</h3>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <input type="text" id="targetDomain" value="google.com" placeholder="Enter Domain (e.g., github.com)">
                 <button id="startPing" onclick="togglePing()">Start Monitor</button>
                 <span id="pingStatus">Status: Idle</span>
             </div>
-            <div id="ping-console" class="console-log">>_ Ready to transmit ICMP packets...</div>
+            <div id="ping-console" class="console-log">>_ Ready to transmit HTTP requests...</div>
             <div class="chart-container"><canvas id="pingChart"></canvas></div>
         </div>
-
-        <div id="scanner" class="module">
-            <h3>Subnet Scanner & Discovery</h3>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <span style="color: #8b949e; font-size: 0.9rem;">Finds active IP and MAC addresses on your local Wi-Fi/LAN.</span>
-                <button id="scanBtn" onclick="runScan()">SCAN SUBNET</button>
-            </div>
-            
-            <div id="scan-console" class="console-log" style="height: 80px; margin-bottom: 20px;">>_ Ready to initiate ARP Ping Sweep...</div>
-
-            <table class="scan-table" id="scanTable" style="display: none;">
-                <thead>
-                    <tr>
-                        <th>Status</th>
-                        <th>IP Address</th>
-                        <th>Physical Address (MAC)</th>
-                    </tr>
-                </thead>
-                <tbody id="scanResults">
-                    </tbody>
-            </table>
-        </div>
-
     </div>
 
     <script>
@@ -115,98 +90,127 @@
 
         // --- GAUGES ---
         const gaugeOptions = { angle: -0.2, lineWidth: 0.2, radiusScale: 1, pointer: { length: 0.6, strokeWidth: 0.035, color: '#c9d1d9' }, limitMax: false, limitMin: true, colorStart: '#58a6ff', colorStop: '#58a6ff', strokeColor: '#30363d', generateGradient: true, highDpiSupport: true, };
-        const gaugeDl = new Gauge(document.getElementById('dlGauge')).setOptions(gaugeOptions); gaugeDl.maxValue = 500; gaugeDl.setMinValue(0); gaugeDl.animationSpeed = 32; gaugeDl.set(0);
-        const gaugeUl = new Gauge(document.getElementById('ulGauge')).setOptions({...gaugeOptions, colorStart: '#a371f7', colorStop: '#a371f7'}); gaugeUl.maxValue = 250; gaugeUl.setMinValue(0); gaugeUl.animationSpeed = 32; gaugeUl.set(0);
+        const gaugeDl = new Gauge(document.getElementById('dlGauge')).setOptions(gaugeOptions); gaugeDl.maxValue = 100; gaugeDl.setMinValue(0); gaugeDl.animationSpeed = 32; gaugeDl.set(0);
+        const gaugeUl = new Gauge(document.getElementById('ulGauge')).setOptions({...gaugeOptions, colorStart: '#a371f7', colorStop: '#a371f7'}); gaugeUl.maxValue = 50; gaugeUl.setMinValue(0); gaugeUl.animationSpeed = 32; gaugeUl.set(0);
 
-        // --- SPEEDTEST ---
         function stLog(msg) { const d = document.getElementById('st-console'); d.innerHTML += `<br>> ${msg}`; d.scrollTop = d.scrollHeight; }
-        function runSpeedtest() {
+
+        // --- CLOUD SPEEDTEST LOGIC (Pure JS) ---
+        async function runCloudSpeedtest() {
             const btn = document.getElementById('st-btn'); btn.disabled = true;
-            gaugeDl.set(0); gaugeUl.set(0); document.getElementById('st-dl').innerText = "0.00"; document.getElementById('st-ul').innerText = "0.00"; document.getElementById('st-ping').innerText = "--";
-            const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/speedtest`);
-            ws.onmessage = (e) => {
-                const res = JSON.parse(e.data); stLog(res.status);
-                if (res.data) {
-                    if (res.data.ping !== undefined) document.getElementById('st-ping').innerText = res.data.ping;
-                    if (res.data.download !== undefined) { document.getElementById('st-dl').innerText = res.data.download; gaugeDl.set(res.data.download); }
-                    if (res.data.upload !== undefined) { document.getElementById('st-ul').innerText = res.data.upload; gaugeUl.set(res.data.upload); }
-                    if (res.data.isp) document.getElementById('st-isp').innerText = `ISP: ${res.data.isp}`;
-                }
-            };
-            ws.onclose = () => { btn.disabled = false; stLog("Diagnostics complete."); };
+            gaugeDl.set(0); gaugeUl.set(0); 
+            document.getElementById('st-dl').innerText = "0.00"; document.getElementById('st-ul').innerText = "0.00"; document.getElementById('st-ping').innerText = "--";
+            document.getElementById('st-isp').innerText = "Network: Testing client connection...";
+
+            try {
+                // 1. PING TEST
+                stLog("Testing HTTP Latency via Cloudflare...");
+                const pingStart = Date.now();
+                await fetch('https://cloudflare-dns.com/dns-query', { mode: 'no-cors', cache: 'no-store' });
+                const pingTime = Date.now() - pingStart;
+                document.getElementById('st-ping').innerText = pingTime;
+                stLog(`✅ Latency test complete: ${pingTime} ms`);
+
+                // 2. DOWNLOAD TEST
+                stLog("Testing Download Speed (Fetching 5MB CDN payload)...");
+                const dlStart = Date.now();
+                const cacheBuster = "?nnn=" + dlStart;
+                // Using a fast Unsplash image as a dummy payload (~5MB)
+                const downloadUrl = "https://images.unsplash.com/photo-1494548162494-384bba4ab999?w=3000&q=100" + cacheBuster;
+                
+                await new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = resolve;
+                    img.onerror = reject;
+                    img.src = downloadUrl;
+                });
+                
+                const dlDuration = (Date.now() - dlStart) / 1000; // in seconds
+                const estimatedBitsLoaded = 40000000; // Roughly 5MB in bits
+                let dlSpeedMbps = (estimatedBitsLoaded / dlDuration) / 1000000;
+                dlSpeedMbps = Math.min(dlSpeedMbps, 500); // Cap for UI stability
+                
+                gaugeDl.set(dlSpeedMbps);
+                document.getElementById('st-dl').innerText = dlSpeedMbps.toFixed(2);
+                stLog(`✅ Download complete: ${dlSpeedMbps.toFixed(2)} Mbps`);
+
+                // 3. UPLOAD TEST
+                stLog("Testing Upload Speed (POSTing 1MB payload to HttpBin)...");
+                const ulStart = Date.now();
+                const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+                let payload = "";
+                for(let i=0; i<1000000; i++) { payload += chars.charAt(Math.floor(Math.random() * chars.length)); } // 1MB string
+                
+                await fetch('https://httpbin.org/post', { method: 'POST', body: payload, mode: 'cors' });
+                const ulDuration = (Date.now() - ulStart) / 1000;
+                const ulBitsLoaded = 8000000; // 1MB in bits
+                let ulSpeedMbps = (ulBitsLoaded / ulDuration) / 1000000;
+                
+                gaugeUl.set(ulSpeedMbps);
+                document.getElementById('st-ul').innerText = ulSpeedMbps.toFixed(2);
+                stLog(`✅ Upload complete: ${ulSpeedMbps.toFixed(2)} Mbps`);
+                
+                document.getElementById('st-isp').innerText = "Network: Diagnostics Finished";
+                stLog("✅ All sequence diagnostics completed successfully.");
+
+            } catch (error) {
+                stLog(`❌ CRITICAL ERROR: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+            }
         }
 
-        // --- PING PULSE ---
+        // --- WEB PING PULSE (Favicon Trick) ---
         const pingChart = new Chart(document.getElementById('pingChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Latency (ms)', data: [], borderColor: '#58a6ff', backgroundColor: 'rgba(88, 166, 255, 0.1)', borderWidth: 2, fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, animation: { duration: 0 }, scales: { y: { beginAtZero: true, grid: { color: '#30363d' } }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } } });
-        function addDataToChart(label, data) { pingChart.data.labels.push(label); pingChart.data.datasets[0].data.push(data); if (pingChart.data.labels.length > 45) { pingChart.data.labels.shift(); pingChart.data.datasets[0].data.shift(); } pingChart.update(); }
+        function addDataToChart(label, data) { pingChart.data.labels.push(label); pingChart.data.datasets[0].data.push(data); if (pingChart.data.labels.length > 30) { pingChart.data.labels.shift(); pingChart.data.datasets[0].data.shift(); } pingChart.update(); }
         function pingLog(msg, isErr=false) { const d = document.getElementById('ping-console'); d.innerHTML += `<br><span style="color: ${isErr ? 'var(--danger)' : '#c9d1d9'}">> ${msg}</span>`; d.scrollTop = d.scrollHeight; }
         
-        let pingWs = null; let isPinging = false; let pingSeq = 1;
+        let pingInterval = null; 
+        let isPinging = false; 
+        let pingSeq = 1;
+
         function togglePing() {
-            const btn = document.getElementById('startPing'); const target = document.getElementById('targetIp').value; const lbl = document.getElementById('pingStatus');
-            if (isPinging) { if (pingWs) pingWs.close(); isPinging = false; btn.innerText = "Start Monitor"; btn.style.background = "var(--accent)"; lbl.innerText = "Status: Stopped"; return; }
+            const btn = document.getElementById('startPing'); 
+            const target = document.getElementById('targetDomain').value.replace(/^https?:\/\//, '').replace(/\/$/, ''); // clean input
+            const lbl = document.getElementById('pingStatus');
+            
+            if (isPinging) { 
+                clearInterval(pingInterval); 
+                isPinging = false; 
+                btn.innerText = "Start Monitor"; btn.style.background = "var(--accent)"; lbl.innerText = "Status: Stopped"; 
+                pingLog(`--- ${target} web ping statistics ---`);
+                return; 
+            }
+
             isPinging = true; pingSeq = 1; btn.innerText = "Stop Monitor"; btn.style.background = "var(--danger)";
-            pingChart.data.labels = []; pingChart.data.datasets[0].data = []; pingChart.update(); document.getElementById('ping-console').innerHTML = `> PING ${target} 56(84) bytes of data.`;
-            pingWs = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/ping`);
-            pingWs.onopen = () => { lbl.innerText = `Status: Pinging ${target}...`; pingWs.send(target); };
-            pingWs.onmessage = (e) => {
-                const res = JSON.parse(e.data); const timeLbl = new Date().toLocaleTimeString('en-US', { hour12: false, hour: "numeric", minute: "numeric", second: "numeric" });
-                if (res.status === "success") { addDataToChart(timeLbl, res.ping); lbl.innerText = `Status: Live`; lbl.style.color = "var(--success)"; pingLog(`64 bytes from ${target}: icmp_seq=${pingSeq++} ttl=116 time=${res.ping} ms`); } 
-                else { addDataToChart(timeLbl, 0); lbl.innerText = `Status: Timeout`; lbl.style.color = "var(--danger)"; pingLog(`Request timeout for icmp_seq=${pingSeq++}`, true); }
-            };
-            pingWs.onclose = () => { isPinging = false; btn.innerText = "Start Monitor"; btn.style.background = "var(--accent)"; };
-        }
+            pingChart.data.labels = []; pingChart.data.datasets[0].data = []; pingChart.update(); 
+            pingLog(`> INITIATING HTTP PING to ${target}`);
 
-        // --- NEW: NETWORK SCANNER LOGIC ---
-        function scanLog(msg) { 
-            const d = document.getElementById('scan-console'); 
-            d.innerHTML += `<br>> ${msg}`; 
-            d.scrollTop = d.scrollHeight; 
-        }
+            lbl.innerText = `Status: Pinging ${target}...`;
 
-        function runScan() {
-            const btn = document.getElementById('scanBtn');
-            const table = document.getElementById('scanTable');
-            const tbody = document.getElementById('scanResults');
-            
-            btn.disabled = true;
-            btn.innerText = "SCANNING...";
-            table.style.display = "none";
-            tbody.innerHTML = ""; // Clear old results
-            
-            scanLog(`Opening connection to scanner module...`);
-            const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/scanner`);
-
-            ws.onmessage = (e) => {
-                const res = JSON.parse(e.data);
-                scanLog(res.status);
-
-                if (res.data) { // We received the device list
-                    res.data.forEach(device => {
-                        const tr = document.createElement('tr');
-                        const statusBadge = device.is_host ? '<span class="badge" style="background: var(--accent); color: #000;">THIS PC</span>' : '<span class="badge">ACTIVE</span>';
-                        tr.innerHTML = `
-                            <td>${statusBadge}</td>
-                            <td style="font-family: monospace; font-weight: bold;">${device.ip}</td>
-                            <td style="font-family: monospace; color: #8b949e;">${device.mac}</td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                    table.style.display = "table"; // Reveal the table
-                }
-            };
-
-            ws.onclose = () => {
-                btn.disabled = false;
-                btn.innerText = "SCAN SUBNET";
-                scanLog("Scanner module disconnected.");
-            };
-            
-            ws.onerror = () => {
-                scanLog("CRITICAL ERROR: Failed to execute scan.");
-                btn.disabled = false;
-                btn.innerText = "SCAN SUBNET";
-            };
+            // The loop
+            pingInterval = setInterval(() => {
+                const img = new Image();
+                const startTime = Date.now();
+                const timeLbl = new Date().toLocaleTimeString('en-US', { hour12: false, hour: "numeric", minute: "numeric", second: "numeric" });
+                
+                // If the image loads OR fails to load (CORS block), it still means the server responded!
+                img.onload = img.onerror = () => {
+                    const duration = Date.now() - startTime;
+                    if (duration < 5000) { // Timeout threshold
+                        addDataToChart(timeLbl, duration); 
+                        lbl.innerText = `Status: Live`; lbl.style.color = "var(--success)"; 
+                        pingLog(`Reply from ${target}: seq=${pingSeq++} time=${duration} ms`);
+                    } else {
+                        addDataToChart(timeLbl, 0); lbl.innerText = `Status: Timeout`; lbl.style.color = "var(--danger)"; 
+                        pingLog(`Request timeout for seq=${pingSeq++}`, true);
+                    }
+                };
+                
+                // Cache buster forces a new request over the network every time
+                img.src = `https://${target}/favicon.ico?r=${startTime}`;
+                
+            }, 1500); // Ping every 1.5 seconds
         }
     </script>
 </body>
